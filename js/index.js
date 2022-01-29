@@ -11,6 +11,12 @@ gaEventHandler();
 // store a promise for each block
 const PROMISES = {};
 
+const hashmap = {
+  'top-pages-realtime': '',
+  'top-pages-7-days': '7-days',
+  'top-pages-30-days': '30-days',
+};
+
 function whenRendered(blockIds, callback) {
   const promises = blockIds.map((id) => PROMISES[id]);
   return Q.all(promises).then(callback);
@@ -117,9 +123,12 @@ d3.selectAll("*[role='tablist']")
     // grab all of the tabs and panels
     const tabs = d3.select(this).selectAll("*[role='tab'][href]")
       .datum(function () {
-        const target = document.getElementById(this.href.split('#').pop());
+        const id = this.href.split('#').pop();
+        const target = document.getElementById(id);
+        // Selected tab is based on the url hash
+        const selected = (hashmap[id] ? `#${hashmap[id]}` : '') === window.location.hash;
         return {
-          selected: this.getAttribute('aria-selected') === 'true',
+          selected,
           target,
           tab: this,
           dataType: this.getAttribute('data-type'),
@@ -135,6 +144,11 @@ d3.selectAll("*[role='tablist']")
         if (tab.selected) {
           selected = tab.target;
           document.getElementById('top_table_type').innerHTML = tab.dataType;
+          // Url hash is updated to match the selected tab
+          const hash = window.location.origin + (hashmap[tab.target.id] !== ''
+            ? `#${hashmap[tab.target.id]}`
+            : '');
+          window.history.replaceState({}, '', hash);
         }
         return tab.selected;
       });
